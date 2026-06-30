@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heritage Pulse — Prototype</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/screens.css">
+</head>
+<body>
+
+<div class="gallery-wrap">
+
+  <div class="gallery-header">
+    <div class="eyebrow">Interactive Prototype · iPhone 16</div>
+    <h1>Heritage Pulse</h1>
+    <p>Tap through the live prototype below — navigation, map, and camera all work. Use the tab bar at the bottom of each screen to move around, or follow the report flow from a monument page.</p>
+  </div>
+
+  <div class="demo-controls">
+    <span class="demo-label">Demo controls</span>
+    <button class="demo-btn" onclick="go('offline')">📡 Simulate offline mode</button>
+    <button class="demo-btn" onclick="go('scan')">📷 Open camera scan</button>
+    <button class="demo-btn" onclick="go('login')">↺ Restart prototype</button>
+  </div>
+
+  <!-- ================= PHONE 1 : MAIN APP (multi-screen via router) ================= -->
+  <div class="iphone">
+    <div class="screen" id="app-screen">
+      <div class="dynamic-island"></div>
+
+      <!-- ===== LOGIN ===== -->
+      <section class="app-view screen-login" data-view="login">
+        <div class="screen-body">
+          <div class="login-emblem">🏛️</div>
+          <h1 class="login-title">Heritage Pulse</h1>
+          <p class="login-sub">Explore, preserve, and contribute to cultural heritage</p>
+          <div class="login-form">
+            <label class="login-label">Email</label>
+            <input class="login-input" type="email" placeholder="your@email.com" value="mariana.silva@example.com">
+            <label class="login-label">Password</label>
+            <input class="login-input" type="password" placeholder="••••••••" value="••••••••">
+            <button class="btn btn-white" onclick="go('permissions')">Sign in</button>
+            <button class="btn btn-translucent" onclick="go('permissions')">Continue as guest</button>
+            <div class="login-hint">By continuing you agree to our Terms &amp; Privacy Policy</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PERMISSIONS ===== -->
+      <section class="app-view" data-view="permissions">
+        <div class="appbar"><h1>Permissions</h1><div style="width:36px"></div></div>
+        <div class="screen-body" style="background:var(--stone)">
+          <div class="perm-list">
+
+            <div class="perm-card">
+              <div class="perm-row">
+                <div class="perm-icon">📍</div>
+                <div class="perm-text"><h3>GPS Location</h3><p>Find nearby sites · tag damage reports</p></div>
+                <button class="toggle on" data-perm="gps" onclick="togglePerm(this)"></button>
+              </div>
+              <div class="perm-desc">Only active while the app is open. Never collected in the background. <b>Required for site discovery.</b></div>
+            </div>
+
+            <div class="perm-card">
+              <div class="perm-row">
+                <div class="perm-icon">📷</div>
+                <div class="perm-text"><h3>Camera</h3><p>AR reconstruction · damage photo reports</p></div>
+                <button class="toggle on" data-perm="camera" onclick="togglePerm(this)"></button>
+              </div>
+              <div class="perm-desc">Activated only when you open AR view or the report screen. Photos never saved without your explicit submission.</div>
+            </div>
+
+            <div class="perm-card">
+              <div class="perm-row">
+                <div class="perm-icon">🎙️</div>
+                <div class="perm-text"><h3>Microphone</h3><p>Detects noise level to switch layout</p></div>
+                <button class="toggle" data-perm="mic" onclick="togglePerm(this)"></button>
+              </div>
+              <div class="perm-desc">Optional. Detects noise levels only — no audio ever recorded or stored. <b>Off by default.</b></div>
+            </div>
+
+            <div class="perm-card">
+              <div class="perm-row">
+                <div class="perm-icon">☀️</div>
+                <div class="perm-text"><h3>Light Sensor</h3><p>Adapts screen contrast to your surroundings</p></div>
+                <button class="toggle on" data-perm="light" onclick="togglePerm(this)"></button>
+              </div>
+              <div class="perm-desc">Optional. Reads ambient brightness only — switches between standard and high-contrast outdoor mode.</div>
+            </div>
+
+            <div class="perm-card">
+              <div class="perm-row">
+                <div class="perm-icon">📐</div>
+                <div class="perm-text"><h3>Accelerometer</h3><p>Stabilizes AR reconstruction view</p></div>
+                <button class="toggle on" data-perm="accel" onclick="togglePerm(this)"></button>
+              </div>
+              <div class="perm-desc">Optional. Used to align past/present overlays while you move the camera. No motion data stored.</div>
+            </div>
+
+          </div>
+
+          <div class="perm-note">
+            <h4>Your data, your control</h4>
+            <p>No background collection. No data sold. Each sensor toggled individually at any time in Settings → Sensor Control.</p>
+          </div>
+
+          <div class="perm-actions">
+            <button class="btn btn-primary" style="width:100%" onclick="go('home')">Continue to Heritage Pulse →</button>
+            <button class="link-skip" onclick="go('home')">Skip for now</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== HOME / DISCOVER ===== -->
+      <section class="app-view" data-view="home">
+        <div class="appbar">
+          <h1>Dashboard</h1>
+          <div class="appbar-avatar" onclick="go('profile')" style="overflow:hidden; padding:0;"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80&auto=format&fit=crop" alt="" style="width:100%; height:100%; object-fit:cover;"></div>
+        </div>
+        <div class="screen-body home-body">
+
+          <div class="section">
+            <div class="section-eyebrow">Condition Map</div>
+            <div class="map-card">
+              <div id="home-map"></div>
+              <div class="map-refresh">🧭</div>
+              <div class="map-legend">
+                <span><i class="dot dot-critical"></i>Critical</span>
+                <span><i class="dot dot-warning"></i>Warning</span>
+                <span><i class="dot dot-monitored"></i>Monitored</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-eyebrow" style="margin-top:6px;">KPI Overview</div>
+            <div class="kpi-grid">
+              <div class="kpi k-critical"><div class="num">3</div><div class="lbl">Critical</div></div>
+              <div class="kpi k-warning"><div class="num">11</div><div class="lbl">Warning</div></div>
+              <div class="kpi k-monitored"><div class="num">42</div><div class="lbl">Monitored</div></div>
+              <div class="kpi k-reports"><div class="num">127</div><div class="lbl">Reports</div></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-eyebrow" style="margin-top:10px;">Recent Alerts</div>
+            <div class="alert-card" onclick="go('monument-carmo')" style="cursor:pointer;">
+              <div class="alert-top">
+                <div class="emoji">🏛️</div>
+                <h3>Casa da Rua das Flores</h3>
+              </div>
+              <div class="alert-meta">Structural damage · Critical</div>
+              <div class="alert-actions">
+                <button class="btn btn-outline" onclick="event.stopPropagation(); showToast('Team dispatched to site')">Dispatch</button>
+                <button class="btn btn-outline" onclick="event.stopPropagation(); showToast('Alert archived')">Archive</button>
+              </div>
+            </div>
+
+            <div class="week-card">
+              <div class="week-head"><h4>Reports this week</h4><div class="total">38 total</div></div>
+              <div class="week-bars" id="week-chart"></div>
+            </div>
+
+            <div class="reco-card">
+              <div class="reco-head"><span class="ri">🌿</span><h4>Quiet sites worth a visit</h4></div>
+              <div class="reco-scroll">
+                <div class="reco-item" onclick="go('monument-carmo')">
+                  <div class="ri-img" style="background-image:url('https://images.unsplash.com/photo-1731964810137-0ea5d5830967?w=300&q=75&auto=format&fit=crop')"></div>
+                  <div class="ri-body"><h5>Torre dos Clérigos</h5><p>Last scan 4 days ago</p></div>
+                </div>
+                <div class="reco-item" onclick="go('monument-igreja')">
+                  <div class="ri-img" style="background-image:url('https://images.unsplash.com/photo-1615892438475-694629f05c7b?w=300&q=75&auto=format&fit=crop')"></div>
+                  <div class="ri-body"><h5>Igreja do Carmo</h5><p>Low footfall · needs eyes</p></div>
+                </div>
+                <div class="reco-item" onclick="go('monument-carmo')">
+                  <div class="ri-img" style="background-image:url('https://images.unsplash.com/photo-1649690398067-02d442186fa2?w=300&q=75&auto=format&fit=crop')"></div>
+                  <div class="ri-body"><h5>Casa da Rua das Flores</h5><p>Unmonitored 6 days</p></div>
+                </div>
+                <div class="reco-item">
+                  <div class="ri-img" style="background-image:url('https://images.unsplash.com/photo-1773862359463-0505fc7aef09?w=300&q=75&auto=format&fit=crop')"></div>
+                  <div class="ri-body"><h5>Capela das Almas</h5><p>No recent scans</p></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <div style="height:24px"></div>
+        </div>
+
+        <button class="fab-scan" onclick="go('scan')" aria-label="Scan">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 8V6a2 2 0 0 1 2-2h2M20 8V6a2 2 0 0 0-2-2h-2M4 16v2a2 2 0 0 0 2 2h2M20 16v2a2 2 0 0 1-2 2h-2" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="12" r="3.4" stroke="#fff" stroke-width="2.2"/></svg>
+        </button>
+
+        <div class="tabbar">
+          <button class="tab-item active" onclick="go('home')">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 11.5 12 4l9 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Discover
+          </button>
+          <button class="tab-item" onclick="go('scan')">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12.5" r="3.4" stroke="currentColor" stroke-width="2"/><path d="M8 6 9.3 4h5.4L16 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Scan
+          </button>
+          <button class="tab-item" onclick="go('report-blank')">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M8 14.5 10.3 12l2 1.8L16 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 8h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Report
+          </button>
+          <button class="tab-item" onclick="go('profile')">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="2"/><path d="M5 20c0-3.6 3.1-6.2 7-6.2s7 2.6 7 6.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Profile
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== MONUMENT DETAIL : Torre dos Clérigos ===== -->
+      <section class="app-view" data-view="monument-carmo">
+        <div class="appbar">
+          <div class="appbar-left">
+            <button class="appbar-back" onclick="go('home')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 19 8 12l7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <h1 style="font-size:21px;">Monument</h1>
+          </div>
+          <div class="appbar-menu" onclick="go('home')">☰</div>
+        </div>
+        <div class="screen-body" style="background:var(--paper)">
+
+          <div class="mon-hero" id="hero-carmo">
+            <span class="mon-hero-kind">Religious · Baroque</span>
+            <div class="mon-hero-track" id="hero-track-carmo">
+              <div class="mon-hero-slide" style="background-image:url('https://images.unsplash.com/photo-1731964810137-0ea5d5830967?w=900&q=80&auto=format&fit=crop')"></div>
+              <div class="mon-hero-slide" style="background-image:url('https://images.unsplash.com/photo-1683236420212-1547ad38bcc5?w=900&q=80&auto=format&fit=crop')"></div>
+              <div class="mon-hero-slide" style="background-image:url('https://images.unsplash.com/photo-1741113568720-6bcc21fe6991?w=900&q=80&auto=format&fit=crop')"></div>
+            </div>
+            <div class="mon-hero-gradient"></div>
+            <div class="mon-hero-arrow left" onclick="heroNav('carmo',-1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 19 8 12l7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="mon-hero-arrow right" onclick="heroNav('carmo',1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="mon-hero-dots" id="hero-dots-carmo"><span class="active"></span><span></span><span></span></div>
+            <button class="mon-recon-btn" onclick="go('recon-carmo')">
+              <span class="icon-wrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 3-6.7" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M3 4v5h5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              Reconstruction
+            </button>
+          </div>
+
+          <div class="mon-title-block">
+            <h2>Torre dos Clérigos</h2>
+            <div class="sub">Baroque church · Built 1763</div>
+          </div>
+
+          <div class="condition-strip">
+            <span class="ci">⚠️</span>
+            <div class="ct"><div class="t1">Warning condition</div><div class="t2">Hairline facade cracks reported · last scan 4 days ago</div></div>
+          </div>
+
+          <div class="mon-stats">
+            <div class="mon-stat"><div class="v">1763</div><div class="l">Built</div></div>
+            <div class="mon-stat"><div class="v">76m</div><div class="l">Height</div></div>
+          </div>
+
+          <div class="mon-about">
+            <h3>About</h3>
+            <div class="mon-about-card">
+              Designed by Nicolau Nasoni, the Torre dos Clérigos is the bell tower of the Clérigos Church and one of the tallest in Portugal. Its granite spiral staircase of 240 steps offers panoramic views across the Douro and the historic centre — a UNESCO World Heritage Site since 1996.
+            </div>
+            <button class="mon-more-link" onclick="showToast('Opening full heritage record…')">
+              View full heritage record
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+
+          <div class="mon-actions">
+            <button class="btn btn-primary" onclick="go('report-carmo')">📸 Report damage</button>
+            <button class="btn btn-outline" onclick="go('recon-carmo')">🕰️ See it in the past</button>
+          </div>
+          <div style="height:16px"></div>
+        </div>
+      </section>
+
+      <!-- ===== MONUMENT DETAIL : Igreja do Carmo ===== -->
+      <section class="app-view" data-view="monument-igreja">
+        <div class="appbar">
+          <div class="appbar-left">
+            <button class="appbar-back" onclick="go('home')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 19 8 12l7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <h1 style="font-size:21px;">Monument</h1>
+          </div>
+          <div class="appbar-menu" onclick="go('home')">☰</div>
+        </div>
+        <div class="screen-body" style="background:var(--paper)">
+
+          <div class="mon-hero">
+            <span class="mon-hero-kind">Religious · Rococo</span>
+            <div class="mon-hero-track">
+              <div class="mon-hero-slide" style="background-image:url('https://images.unsplash.com/photo-1614807254023-133d1a7a3c41?w=900&q=80&auto=format&fit=crop')"></div>
+            </div>
+            <div class="mon-hero-gradient"></div>
+            <button class="mon-recon-btn" onclick="go('recon-carmo')">
+              <span class="icon-wrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 1 0 3-6.7" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M3 4v5h5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              Reconstruction
+            </button>
+          </div>
+
+          <div class="mon-title-block">
+            <h2>Igreja do Carmo</h2>
+            <div class="sub">Religious · Built 1756</div>
+          </div>
+
+          <div class="mon-stats">
+            <div class="mon-stat"><div class="v">1756</div><div class="l">Built</div></div>
+            <div class="mon-stat"><div class="v">75m</div><div class="l">Height</div></div>
+          </div>
+
+          <div class="mon-about">
+            <h3>About</h3>
+            <div class="mon-about-card">
+              Famous for its blue-and-white azulejo tile facade added in 1912, Igreja do Carmo sits beside the slimmest house in Porto — a narrow building just over a metre wide, built to separate it from the neighbouring Carmelitas church.
+            </div>
+          </div>
+
+          <div class="mon-actions">
+            <button class="btn btn-primary" onclick="go('report-igreja')">📸 Report damage</button>
+            <button class="btn btn-outline" onclick="go('recon-carmo')">🕰️ See it in the past</button>
+          </div>
+          <div style="height:16px"></div>
+        </div>
+      </section>
+
+      <!-- ===== RECONSTRUCTION (AR time-slider) ===== -->
+      <section class="app-view" data-view="recon-carmo">
+        <div class="appbar">
+          <div class="appbar-left">
+            <button class="appbar-back" onclick="go('monument-carmo')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 19 8 12l7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <h1 style="font-size:21px;">Reconstruction</h1>
+          </div>
+          <div style="width:36px"></div>
+        </div>
+        <div class="screen-body" style="overflow:hidden;">
+          <div class="recon-stage">
+            <div class="recon-compare" id="recon-compare">
+              <img class="recon-img after" src="https://images.unsplash.com/photo-1683236420212-1547ad38bcc5?w=900&q=80&auto=format&fit=crop">
+              <img class="recon-img before" id="recon-before" src="https://images.unsplash.com/photo-1658215076604-cdfe23eba9a7?w=900&q=80&auto=format&fit=crop">
+              <div class="recon-handle" id="recon-handle"></div>
+              <span class="recon-tag now">Today</span>
+              <span class="recon-tag past">Circa 1850</span>
+            </div>
+          </div>
+          <div class="recon-info">
+            <h3>🕰️ Time Machine — Torre dos Clérigos</h3>
+            <p>Drag the slider to compare the monument's current condition against a historical reconstruction generated from archival drawings, restoration records and AI infill.</p>
+            <div class="recon-meta-row">
+              <div class="recon-meta"><div class="v">94%</div><div class="l">Match confidence</div></div>
+              <div class="recon-meta"><div class="v">1850</div><div class="l">Reference era</div></div>
+              <div class="recon-meta"><div class="v">3</div><div class="l">Sources used</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SCAN / CAMERA ===== -->
+      <section class="app-view" data-view="scan">
+        <div class="screen-body" style="padding:0;">
+          <div class="cam-wrap">
+            <video id="cam-video" class="cam-video" autoplay playsinline muted></video>
+            <div class="cam-fallback" id="cam-fallback" style="display:none;">
+              <div class="ci">📷</div>
+              <p>Camera access needed.<br>Tap below to allow camera, or continue with a sample scan.</p>
+              <button class="btn btn-outline" style="margin-top:6px; color:#fff; border-color:rgba(255,255,255,.4);" onclick="startCamera()">Enable camera</button>
+            </div>
+
+            <div class="cam-topbar">
+              <button class="close-btn" onclick="stopCameraAndGo('home')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+
+            <div class="cam-status">
+              <span id="cam-status-text"><i class="dot-live"></i> Scanning…</span>
+            </div>
+
+            <div class="cam-overlay">
+              <div class="cam-frame">
+                <div class="cam-corner tl"></div>
+                <div class="cam-corner tr"></div>
+                <div class="cam-corner bl"></div>
+                <div class="cam-corner br"></div>
+                <div class="cam-scanline" id="cam-scanline"></div>
+              </div>
+            </div>
+
+            <div class="cam-result" id="cam-result">
+              <h4>🏛️ Torre dos Clérigos identified</h4>
+              <p>Match confidence 96% · Baroque church, 1763 · Tap shutter to capture for reconstruction or damage report.</p>
+            </div>
+
+            <div class="cam-bottombar">
+              <button class="cam-side-btn" onclick="go('home')" title="Library">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#fff" stroke-width="2"/><circle cx="8.5" cy="9" r="1.6" fill="#fff"/><path d="M21 16l-5.5-5.5L4 21" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="cam-shutter" onclick="capturePhoto()" aria-label="Capture"></button>
+              <button class="cam-side-btn" onclick="showToast('Camera flipped')" title="Flip camera">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 8h11l-2.5-2.5M20 16H9l2.5 2.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REPORT FORM (Torre dos Clérigos) ===== -->
+      <section class="app-view" data-view="report-carmo">
+        <div class="appbar">
+          <div class="appbar-left">
+            <button class="appbar-back" onclick="go('monument-carmo')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 19 8 12l7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <h1 style="font-size:21px;">Report</h1>
+          </div>
+          <div style="width:36px"></div>
+        </div>
+        <div class="screen-body" style="background:var(--stone)">
+          <div class="report-form">
+
+            <div>
+              <div class="field-label">Report Damage</div>
+              <div class="monument-pick">
+                <div class="mp-thumb">🏛️</div>
+                <div class="mp-text"><div class="l">Monument</div><div class="v">Torre dos Clérigos</div></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="field-label">Photos</div>
+              <div class="photo-strip" id="photo-strip-carmo">
+                <button class="photo-add-btn" onclick="go('scan')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12.5" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+                  Add photo
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <div class="field-label">Damage Type</div>
+              <div class="damage-type-grid">
+                <button class="dtype-chip selected" onclick="selectChip(this)">🧱 Structural crack</button>
+                <button class="dtype-chip" onclick="selectChip(this)">💧 Water damage</button>
+                <button class="dtype-chip" onclick="selectChip(this)">🎨 Graffiti</button>
+                <button class="dtype-chip" onclick="selectChip(this)">🌿 Vegetation</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="field-label">Severity</div>
+              <div class="sev-grid">
+                <button class="sev-btn low" onclick="selectSeverity(this)">Low</button>
+                <button class="sev-btn medium selected" onclick="selectSeverity(this)">Medium</button>
+                <button class="sev-btn critical" onclick="selectSeverity(this)">Critical</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="field-label">Notes</div>
+              <textarea class="report-textarea" maxlength="240" placeholder="Describe what you noticed — location on the structure, size, whether it's getting worse…" oninput="updateCharCount(this)">Hairline crack along the lower cornice on the north face, roughly 40cm, slightly wider than last month.</textarea>
+              <div class="char-count"><span id="char-count-carmo">98</span>/240</div>
+            </div>
+
+            <button class="btn btn-primary" onclick="go('submitted-carmo')">Submit Report →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REPORT FORM (Igreja do Carmo) ===== -->
+      <section class="app-view" data-view="report-igreja">
+        <div class="appbar">
+          <div class="appbar-left">
+            <button class="appbar-back" onclick="go('monument-igreja')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 19 8 12l7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <h1 style="font-size:21px;">Report</h1>
+          </div>
+          <div style="width:36px"></div>
+        </div>
+        <div class="screen-body" style="background:var(--stone)">
+          <div class="report-form">
+            <div>
+              <div class="field-label">Report Damage</div>
+              <div class="monument-pick">
+                <div class="mp-thumb">⛪</div>
+                <div class="mp-text"><div class="l">Monument</div><div class="v">Igreja do Carmo</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Photos</div>
+              <div class="photo-strip">
+                <button class="photo-add-btn" onclick="go('scan')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12.5" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+                  Add photo
+                </button>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Damage Type</div>
+              <div class="damage-type-grid">
+                <button class="dtype-chip" onclick="selectChip(this)">🧱 Structural crack</button>
+                <button class="dtype-chip selected" onclick="selectChip(this)">💧 Water damage</button>
+                <button class="dtype-chip" onclick="selectChip(this)">🎨 Graffiti</button>
+                <button class="dtype-chip" onclick="selectChip(this)">🌿 Vegetation</button>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Severity</div>
+              <div class="sev-grid">
+                <button class="sev-btn low selected" onclick="selectSeverity(this)">Low</button>
+                <button class="sev-btn medium" onclick="selectSeverity(this)">Medium</button>
+                <button class="sev-btn critical" onclick="selectSeverity(this)">Critical</button>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Notes</div>
+              <textarea class="report-textarea" maxlength="240" placeholder="Describe what you noticed…" oninput="updateCharCount(this,'igreja')">Tile staining beneath the side gutter, looks like recent rain damage.</textarea>
+              <div class="char-count"><span id="char-count-igreja">66</span>/240</div>
+            </div>
+            <button class="btn btn-primary" onclick="go('submitted-igreja')">Submit Report →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REPORT (blank / from tab bar) ===== -->
+      <section class="app-view" data-view="report-blank">
+        <div class="appbar">
+          <div class="appbar-left">
+            <button class="appbar-back" onclick="go('home')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 19 8 12l7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <h1 style="font-size:21px;">Report</h1>
+          </div>
+          <div style="width:36px"></div>
+        </div>
+        <div class="screen-body" style="background:var(--stone)">
+          <div class="report-form">
+            <div>
+              <div class="field-label">Report Damage</div>
+              <button class="monument-pick" style="width:100%; cursor:pointer; text-align:left;" onclick="go('home')">
+                <div class="mp-thumb">📍</div>
+                <div class="mp-text"><div class="l">Monument</div><div class="v" style="color:var(--ink-soft); font-weight:600;">Select from map or scan…</div></div>
+              </button>
+            </div>
+            <div>
+              <div class="field-label">Photos</div>
+              <div class="photo-strip">
+                <button class="photo-add-btn" onclick="go('scan')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12.5" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+                  Add photo
+                </button>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Damage Type</div>
+              <div class="damage-type-grid">
+                <button class="dtype-chip" onclick="selectChip(this)">🧱 Structural crack</button>
+                <button class="dtype-chip" onclick="selectChip(this)">💧 Water damage</button>
+                <button class="dtype-chip" onclick="selectChip(this)">🎨 Graffiti</button>
+                <button class="dtype-chip" onclick="selectChip(this)">🌿 Vegetation</button>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Severity</div>
+              <div class="sev-grid">
+                <button class="sev-btn low" onclick="selectSeverity(this)">Low</button>
+                <button class="sev-btn medium" onclick="selectSeverity(this)">Medium</button>
+                <button class="sev-btn critical" onclick="selectSeverity(this)">Critical</button>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Notes</div>
+              <textarea class="report-textarea" maxlength="240" placeholder="Describe what you noticed — location on the structure, size, whether it's getting worse…" oninput="updateCharCount(this,'blank')"></textarea>
+              <div class="char-count"><span id="char-count-blank">0</span>/240</div>
+            </div>
+            <button class="btn btn-primary" onclick="go('submitted-carmo')">Submit Report →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SUBMITTED (Torre dos Clérigos) ===== -->
+      <section class="app-view" data-view="submitted-carmo">
+        <div class="screen-body submitted-body">
+          <div class="submitted-check">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2 class="submitted-title">Report Submitted</h2>
+          <p class="submitted-sub">Your report has entered the validation pipeline and will be reviewed by Porto City Council.</p>
+
+          <div class="ai-process-card">
+            <div class="pi">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2 19 19M19 5l-2.8 2.8M7.8 16.2 5 19" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div><h4>AI analysis in progress</h4><p>Your photos are being cross-checked against historical scans to estimate severity and rate of change.</p></div>
+          </div>
+
+          <div class="submitted-summary">
+            <div class="sum-row"><span class="l">Monument</span><span class="v">Torre dos Clérigos</span></div>
+            <div class="sum-row"><span class="l">Severity</span><span class="v">Medium</span></div>
+            <div class="sum-row"><span class="l">Points Earned</span><span class="v pts">+30 pts</span></div>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;" onclick="go('home')">Back to Discovery</button>
+        </div>
+      </section>
+
+      <!-- ===== SUBMITTED (Igreja do Carmo) ===== -->
+      <section class="app-view" data-view="submitted-igreja">
+        <div class="screen-body submitted-body">
+          <div class="submitted-check">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2 class="submitted-title">Report Submitted</h2>
+          <p class="submitted-sub">Your report has entered the validation pipeline and will be reviewed by Porto City Council.</p>
+
+          <div class="ai-process-card">
+            <div class="pi">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2 19 19M19 5l-2.8 2.8M7.8 16.2 5 19" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div><h4>AI analysis in progress</h4><p>Your photos are being cross-checked against historical scans to estimate severity and rate of change.</p></div>
+          </div>
+
+          <div class="submitted-summary">
+            <div class="sum-row"><span class="l">Monument</span><span class="v">Igreja do Carmo</span></div>
+            <div class="sum-row"><span class="l">Severity</span><span class="v">Low</span></div>
+            <div class="sum-row"><span class="l">Points Earned</span><span class="v pts">+30 pts</span></div>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;" onclick="go('home')">Back to Discovery</button>
+        </div>
+      </section>
+
+      <!-- ===== OFFLINE MODE ===== -->
+      <section class="app-view" data-view="offline">
+        <div class="offline-banner"><span class="dot-pulse"></span> Offline Mode Active</div>
+        <div class="appbar">
+          <h1>Heritage</h1>
+          <div class="appbar-menu" onclick="go('home')">☰</div>
+        </div>
+        <div class="screen-body" style="background:var(--stone)">
+
+          <div class="sync-card">
+            <span class="si">⏳</span>
+            <div class="st"><h4>Waiting to sync</h4><p>2 reports queued · will upload automatically when back online</p></div>
+            <span class="sync-progress">2</span>
+          </div>
+
+          <div class="queue-card">
+            <h4>Pending uploads</h4>
+            <div class="queue-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Torre dos Clérigos — damage report</div>
+            <div class="queue-row"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Igreja do Carmo — 2 photos</div>
+          </div>
+
+          <div class="section">
+            <div class="section-eyebrow" style="margin-top:14px;">Cached Sites</div>
+            <div style="font-size:12px; color:var(--ink-soft); margin:-4px 0 12px;">Last updated 2 hours ago — available without a connection</div>
+          </div>
+
+          <div class="cached-list" style="padding-top:0;">
+            <div class="cached-item available" onclick="go('monument-carmo')" style="cursor:pointer;">
+              <div class="cached-thumb">🏛️</div>
+              <div class="cached-text"><h4>Torre dos Clérigos</h4><p>Baroque church · 1763</p><span class="tag">CACHED · FULL DETAIL</span></div>
+            </div>
+            <div class="cached-item available" onclick="go('monument-igreja')" style="cursor:pointer;">
+              <div class="cached-thumb">⛪</div>
+              <div class="cached-text"><h4>Igreja do Carmo</h4><p>Religious · 1756</p><span class="tag">CACHED · FULL DETAIL</span></div>
+            </div>
+            <div class="cached-item">
+              <div class="cached-thumb">🏚️</div>
+              <div class="cached-text"><h4>Casa da Rua das Flores</h4><p>Residential · 1890</p><span class="tag">NO CROWD DATA</span></div>
+            </div>
+          </div>
+
+          <div style="padding:6px 20px 24px;">
+            <button class="btn btn-outline" style="width:100%;" onclick="go('home')">↻ Try reconnecting</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PROFILE ===== -->
+      <section class="app-view" data-view="profile">
+        <div class="appbar">
+          <h1>Heritage</h1>
+          <div class="appbar-menu" onclick="go('settings')">☰</div>
+        </div>
+        <div class="screen-body" style="background:var(--stone)">
+
+          <div class="profile-hero">
+            <div class="profile-avatar"><img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80&auto=format&fit=crop" alt=""></div>
+            <h2>Mariana Silva</h2>
+            <div class="sub">Explorer · Member since March 2025</div>
+            <div class="level-row">
+              <span class="level-chip">Level 4</span>
+              <div class="level-bar-track"><div class="level-bar-fill" style="width:62%"></div></div>
+              <span class="pts-left">380 to Lvl 5</span>
+            </div>
+          </div>
+
+          <div class="profile-stats">
+            <div class="pstat"><div class="num">620</div><div class="lbl">Points</div></div>
+            <div class="pstat"><div class="num">12</div><div class="lbl">Sites</div></div>
+            <div class="pstat"><div class="num">3</div><div class="lbl">Reports</div></div>
+            <div class="pstat"><div class="num">2</div><div class="lbl">Badges</div></div>
+          </div>
+
+          <div class="section">
+            <div class="section-eyebrow" style="margin-top:4px;">Active Mission</div>
+          </div>
+          <div class="mission-card" onclick="openMissions()" style="cursor:pointer;">
+            <div class="mission-head"><span class="tag">Mission N7</span><span class="pts">+150 pts</span></div>
+            <h3>Baroque Porto</h3>
+            <div class="d">Visit 3 baroque buildings in the historic centre</div>
+            <div class="mission-track"><div style="width:33%"></div></div>
+            <div class="mission-chips">
+              <span class="mchip done">✓ Igreja do Carmo</span>
+              <span class="mchip">Carmelitas</span>
+              <span class="mchip">Clérigos</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-eyebrow" style="margin-top:18px;">Badges Earned</div>
+          </div>
+          <div class="badges-row">
+            <div class="badge"><div class="bi">🧭</div><div class="bl">Explorer</div></div>
+            <div class="badge"><div class="bi">📸</div><div class="bl">Reporter</div></div>
+            <div class="badge locked"><div class="bi">📜</div><div class="bl">Historian</div></div>
+            <div class="badge locked"><div class="bi">⭐</div><div class="bl">Guardian</div></div>
+          </div>
+
+          <div class="section">
+            <div class="section-eyebrow" style="margin-top:18px;">Recent Activity</div>
+          </div>
+          <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:9px;">
+            <div class="activity-item">
+              <span class="adot"></span><span class="at">Visited Igreja do Carmo</span>
+              <span class="ap">+50 pts<div class="when">Today · 11:24</div></span>
+            </div>
+            <div class="activity-item">
+              <span class="adot"></span><span class="at">Submitted damage report</span>
+              <span class="ap">+30 pts<div class="when">Yesterday</div></span>
+            </div>
+            <div class="activity-item">
+              <span class="adot"></span><span class="at">Completed mission: Hidden Ribeira</span>
+              <span class="ap">+150 pts<div class="when">2 days ago</div></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabbar">
+          <button class="tab-item" onclick="go('home')">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 11.5 12 4l9 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Discover
+          </button>
+          <button class="tab-item" onclick="go('scan')">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2.5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12.5" r="3.4" stroke="currentColor" stroke-width="2"/><path d="M8 6 9.3 4h5.4L16 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Scan
+          </button>
+          <button class="tab-item" onclick="go('report-blank')">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="2.2" stroke="currentColor" stroke-width="2"/><path d="M8 14.5 10.3 12l2 1.8L16 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 8h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Report
+          </button>
+          <button class="tab-item active" onclick="go('profile')">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="2"/><path d="M5 20c0-3.6 3.1-6.2 7-6.2s7 2.6 7 6.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Profile
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== SETTINGS ===== -->
+      <section class="app-view" data-view="settings">
+        <div class="appbar">
+          <div class="appbar-left">
+            <button class="appbar-back" onclick="go('profile')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 19 8 12l7-7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <h1 style="font-size:21px;">Settings</h1>
+          </div>
+          <div style="width:36px"></div>
+        </div>
+        <div class="screen-body" style="background:var(--paper); padding:20px;">
+          <div class="field-label">Sensors</div>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+            <div class="perm-card" style="padding:14px 16px;">
+              <div class="perm-row">
+                <div class="perm-icon" style="font-size:18px; width:40px; height:40px;">📍</div>
+                <div class="perm-text"><h3 style="font-size:14.5px;">GPS Location</h3><p>Find nearby sites &amp; tag reports</p></div>
+                <button class="toggle on" onclick="togglePerm(this)"></button>
+              </div>
+            </div>
+            <div class="perm-card" style="padding:14px 16px;">
+              <div class="perm-row">
+                <div class="perm-icon" style="font-size:18px; width:40px; height:40px;">📷</div>
+                <div class="perm-text"><h3 style="font-size:14.5px;">Camera</h3><p>AR reconstruction &amp; damage photos</p></div>
+                <button class="toggle on" onclick="togglePerm(this)"></button>
+              </div>
+            </div>
+            <div class="perm-card" style="padding:14px 16px;">
+              <div class="perm-row">
+                <div class="perm-icon" style="font-size:18px; width:40px; height:40px;">🎙️</div>
+                <div class="perm-text"><h3 style="font-size:14.5px;">Microphone</h3><p>Detects noise levels to switch layout</p></div>
+                <button class="toggle" onclick="togglePerm(this)"></button>
+              </div>
+            </div>
+            <div class="perm-card" style="padding:14px 16px;">
+              <div class="perm-row">
+                <div class="perm-icon" style="font-size:18px; width:40px; height:40px;">☀️</div>
+                <div class="perm-text"><h3 style="font-size:14.5px;">Light Sensor</h3><p>Adapts contrast outdoors</p></div>
+                <button class="toggle on" onclick="togglePerm(this)"></button>
+              </div>
+            </div>
+            <div class="perm-card" style="padding:14px 16px;">
+              <div class="perm-row">
+                <div class="perm-icon" style="font-size:18px; width:40px; height:40px;">📐</div>
+                <div class="perm-text"><h3 style="font-size:14.5px;">Accelerometer</h3><p>Stabilizes AR reconstruction</p></div>
+                <button class="toggle on" onclick="togglePerm(this)"></button>
+              </div>
+            </div>
+          </div>
+          <div class="field-label">Privacy</div>
+          <button class="btn btn-outline" style="width:100%;" onclick="showToast('Cache cleared')">Clear Cache</button>
+          <div style="height:8px"></div>
+          <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="go('offline')">Preview Offline Mode</button>
+        </div>
+      </section>
+
+      <!-- ===== MISSIONS OVERLAY ===== -->
+      <div class="missions-overlay" id="missions-overlay">
+        <div class="missions-sheet">
+          <div class="missions-handle"></div>
+          <div class="missions-head"><h3>Missions</h3><button class="missions-close" onclick="closeMissions()">✕</button></div>
+          <div class="missions-scroll">
+            <div class="mission-list-card active-mission">
+              <div class="mlc-top"><h4>Baroque Porto</h4><span class="status live">IN PROGRESS</span></div>
+              <div class="mlc-d">Visit 3 baroque buildings in the historic centre</div>
+              <div class="mlc-track"><div style="width:33%"></div></div>
+            </div>
+            <div class="mission-list-card">
+              <div class="mlc-top"><h4>Azulejo Trail</h4><span class="pts">+120 pts</span></div>
+              <div class="mlc-d">Photograph 5 tiled facades across Porto</div>
+              <div class="mlc-track"><div style="width:0%"></div></div>
+            </div>
+            <div class="mission-list-card">
+              <div class="mlc-top"><h4>Riverside Watch</h4><span class="pts">+90 pts</span></div>
+              <div class="mlc-d">Report on 2 monuments along the Douro</div>
+              <div class="mlc-track"><div style="width:0%"></div></div>
+            </div>
+            <div class="mission-list-card">
+              <div class="mlc-top"><h4>Hidden Ribeira</h4><span class="status live" style="background:var(--primary-dim); color:var(--primary);">COMPLETED</span></div>
+              <div class="mlc-d">Discover 4 lesser-known sites in Ribeira</div>
+              <div class="mlc-track"><div style="width:100%; background:var(--success);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+  <!-- ================= PHONE 2 : AUTHORITY DASHBOARD ================= -->
+  <div class="iphone">
+    <div class="screen">
+      <div class="dynamic-island"></div>
+      <div class="appbar">
+        <h1>Dashboard</h1>
+        <div class="appbar-avatar" style="overflow:hidden; padding:0;"><img src="https://images.unsplash.com/photo-1506863530036-1efeddceb993?w=200&q=80&auto=format&fit=crop" alt="" style="width:100%; height:100%; object-fit:cover;"></div>
+      </div>
+      <div class="screen-body home-body">
+
+        <div class="section">
+          <div class="section-eyebrow">Condition Map</div>
+          <div class="map-card">
+            <div id="authority-map"></div>
+            <div class="map-refresh">🧭</div>
+            <div class="map-legend">
+              <span><i class="dot dot-critical"></i>Critical</span>
+              <span><i class="dot dot-warning"></i>Warning</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-eyebrow" style="margin-top:6px;">KPI Overview</div>
+          <div class="kpi-grid">
+            <div class="kpi k-critical"><div class="num">3</div><div class="lbl">Critical</div></div>
+            <div class="kpi k-warning"><div class="num">11</div><div class="lbl">Warning</div></div>
+            <div class="kpi k-monitored"><div class="num">42</div><div class="lbl">Monitored</div></div>
+            <div class="kpi k-reports"><div class="num">127</div><div class="lbl">Reports</div></div>
+          </div>
+        </div>
+
+        <div class="ai-banner">
+          <div class="aii"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2 19 19M19 5l-2.8 2.8M7.8 16.2 5 19" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="at"><h4>AI Triage Active</h4><p>14 incoming reports auto-scored on severity in the last 24h</p></div>
+        </div>
+
+        <div class="section">
+          <div class="section-eyebrow" style="margin-top:14px;">Recent Alerts</div>
+          <div class="alert-card">
+            <div class="alert-top"><div class="emoji">🏛️</div><h3>Casa da Rua das Flores</h3></div>
+            <div class="alert-meta">Structural damage · Critical</div>
+            <div class="alert-actions">
+              <button class="btn btn-outline" onclick="showToast('Team dispatched to site')">Dispatch</button>
+              <button class="btn btn-outline" onclick="showToast('Alert archived')">Archive</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-eyebrow" style="margin-top:16px;">Live Report Feed</div>
+        </div>
+        <div class="report-feed">
+          <div class="report-row">
+            <div class="ri">🧱</div>
+            <div class="rt"><h5>Structural crack · Torre dos Clérigos</h5><p>Mariana S. · Medium severity</p></div>
+            <div class="rtime">2m ago</div>
+          </div>
+          <div class="report-row">
+            <div class="ri">💧</div>
+            <div class="rt"><h5>Water damage · Igreja do Carmo</h5><p>Tiago R. · Low severity</p></div>
+            <div class="rtime">18m ago</div>
+          </div>
+          <div class="report-row">
+            <div class="ri">🌿</div>
+            <div class="rt"><h5>Vegetation · Sé do Porto</h5><p>Ana F. · Low severity</p></div>
+            <div class="rtime">41m ago</div>
+          </div>
+          <div class="report-row">
+            <div class="ri">🎨</div>
+            <div class="rt"><h5>Graffiti · Palácio da Bolsa</h5><p>Diego M. · Medium severity</p></div>
+            <div class="rtime">1h ago</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="week-card">
+            <div class="week-head"><h4>Reports this week</h4><div class="total">38 total</div></div>
+            <div class="week-bars" id="week-chart-2"></div>
+          </div>
+        </div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="gallery-footer">Heritage Pulse prototype — built as a static site, no backend. Map data © OpenStreetMap contributors.</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
